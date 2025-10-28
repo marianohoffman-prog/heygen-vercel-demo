@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HeyGen Avatar Test</title>
+
+    <!-- Load the HeyGen Streaming Avatar SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@heygen/streaming-avatar@latest/dist/index.umd.js"></script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding: 40px;
+        background: #f8f9fa;
+      }
+
+      h1 {
+        color: #333;
+      }
+
+      #avatarVideo {
+        width: 320px;
+        height: 180px;
+        background: black;
+        border-radius: 8px;
+        margin: 20px auto;
+        display: block;
+      }
+
+      button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #0056b3;
+      }
+
+      #status {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #555;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>HeyGen Avatar Test</h1>
+    <video id="avatarVideo" autoplay muted playsinline></video>
+    <button id="speak">Speak</button>
+    <div id="status">Click “Speak” to start</div>
+
+    <script>
+      const videoEl = document.getElementById("avatarVideo");
+      const statusEl = document.getElementById("status");
+      const btn = document.getElementById("speak");
+
+      btn.onclick = async () => {
+        statusEl.innerText = "Requesting token...";
+
+        try {
+          // 1️⃣ Request a streaming token from your server
+          const tokenRes = await fetch("/api/token", { method: "POST" });
+          const tokenData = await tokenRes.json();
+          const token = tokenData?.data?.token;
+
+          if (!token) throw new Error("No token returned from /api/token");
+
+          statusEl.innerText = "Initializing avatar...";
+
+          // 2️⃣ Initialize the HeyGen avatar client
+          const client = new window.HeyGenStreamingAvatar({ token });
+
+          // 3️⃣ Start the video stream
+          await client.init(videoEl);
+          statusEl.innerText = "Avatar ready ✅";
+
+          // 4️⃣ Make the avatar speak
+          await client.speak({
+            text: "Hello Mariano, I’m your HeyGen test avatar. Nice to meet you!",
+          });
+
+        } catch (err) {
+          console.error(err);
+          statusEl.innerText = "Init failed ❌: " + err.message;
+        }
+      };
+    </script>
+  </body>
+</html>
