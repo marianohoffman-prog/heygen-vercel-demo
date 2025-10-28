@@ -7,23 +7,30 @@ export default async function handler(req, res) {
   }
 
   try {
+    const key = process.env.HEYGEN_API_KEY;
+    if (!key) {
+      return res.status(500).json({ error: "HEYGEN_API_KEY is missing" });
+    }
+
     const response = await fetch("https://api.heygen.com/v1/streaming.create_token", {
       method: "POST",
       headers: {
-        "x-api-key": process.env.HEYGEN_API_KEY,
+        "x-api-key": key,
         "Content-Type": "application/json",
       },
     });
 
-    const data = await response.json();
-    console.log("✅ HeyGen API raw response:", data);
+    const text = await response.text(); // read raw body for debugging
+    console.log("🔍 Raw HeyGen response:", text);
 
-    if (!data?.data?.token) {
-      console.warn("⚠️ No token returned from HeyGen!");
-      return res.status(400).json(data);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { raw: text };
     }
 
-    res.status(200).json(data);
+    res.status(response.status).json(data);
   } catch (e) {
     console.error("❌ Fetch error:", e);
     res.status(500).json({ error: e.message });
